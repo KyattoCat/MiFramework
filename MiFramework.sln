@@ -5,6 +5,11 @@ VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiFramework", "MiFramework\MiFramework.csproj", "{2E5CBB72-5174-44BF-A28E-0D174F867EE4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiFrameworkTest", "MiFrameworkTest\MiFrameworkTest.csproj", "{61975C7C-9E38-4AE4-B684-E40D09369A2E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2E5CBB72-5174-44BF-A28E-0D174F867EE4} = {2E5CBB72-5174-44BF-A28E-0D174F867EE4}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +20,10 @@ Global
 		{2E5CBB72-5174-44BF-A28E-0D174F867EE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E5CBB72-5174-44BF-A28E-0D174F867EE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E5CBB72-5174-44BF-A28E-0D174F867EE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61975C7C-9E38-4AE4-B684-E40D09369A2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61975C7C-9E38-4AE4-B684-E40D09369A2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61975C7C-9E38-4AE4-B684-E40D09369A2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61975C7C-9E38-4AE4-B684-E40D09369A2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
