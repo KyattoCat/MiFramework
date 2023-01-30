@@ -14,12 +14,12 @@ namespace MiFramework.Stream
 
         private byte[] data;            // 
         private uint offset;            // 
-        private uint maxCapacity = 1;   // data数组的大小
+        private uint maxCapacity = 16;  // data数组的大小
         private uint count;             // 当前ByteArray中有效位数
 
         public ByteArray()
         {
-            data = new byte[1];
+            data = new byte[maxCapacity];
         }
 
         public byte[] GetData()
