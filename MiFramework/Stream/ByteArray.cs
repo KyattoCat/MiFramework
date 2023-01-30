@@ -4,12 +4,18 @@ namespace MiFramework.Stream
 {
     public class ByteArray
     {
-        private const int INT32_BYTE_COUNT = 4;
-        private const int INT16_BYTE_COUNT = 2;
+        private const UInt32 NEG_FLAG = 0x80;
+        private const UInt16 INT16_FLAG = 0x2000;
+        private const UInt32 INT32_FLAG = 0x40000000;
 
-        private byte[] data;
-        private uint offset;
-        private uint capacity = 1;
+        private const int ADAPT_INT8_MAXVALUE = 32;
+        private const int ADAPT_INT16_MAXVALUE = 8192;
+        private const int ADAPT_INT32_MAXVALUE = 536870912;
+
+        private byte[] data;            // 
+        private uint offset;            // 
+        private uint maxCapacity = 1;   // data数组的大小
+        private uint count;             // 当前ByteArray中有效位数
 
         public ByteArray()
         {
@@ -18,12 +24,15 @@ namespace MiFramework.Stream
 
         public byte[] GetData()
         {
-            return data;
+            byte[] result = new byte[count];
+            Array.Copy(data, result, count);
+            return result;
         }
 #if DEBUG
-        public void CopyTo(ByteArray destination)
+        public void WriteTo(ByteArray destination)
         {
-            destination.capacity = capacity;
+            destination.maxCapacity = maxCapacity;
+            destination.count = count;
             destination.offset = 0;
             destination.data = new byte[data.Length];
             for (int i = 0; i < data.Length; i++)
@@ -34,7 +43,7 @@ namespace MiFramework.Stream
 #endif
         private void ExpandCapacity()
         {
-            ulong newCapacity = capacity * INT16_BYTE_COUNT;
+            ulong newCapacity = maxCapacity * 2;
             
             if (newCapacity > uint.MaxValue)
             {
@@ -43,24 +52,29 @@ namespace MiFramework.Stream
 
             byte[] bytes = new byte[newCapacity];
             
-            Array.Copy(data, bytes, capacity);
+            Array.Copy(data, bytes, maxCapacity);
             
-            capacity = (uint)newCapacity;
+            maxCapacity = (uint)newCapacity;
 
             data = bytes;
         }
 
         public void WriteByte(byte value)
         {
-            if (offset + 1 > capacity)
+            if (offset + 1 > maxCapacity)
             {
                 ExpandCapacity();
             }
             data[offset++] = value;
+            count++;
         }
 
         public byte ReadByte()
         {
+            if (offset + 1 > count)
+            {
+                throw new IndexOutOfRangeException();
+            }
             return data[offset++];
         }
 
@@ -82,16 +96,6 @@ namespace MiFramework.Stream
             return bytes;
         }
 
-        public void WriteInt(int value)
-        {
-            WriteBytes(BitConverter.GetBytes(value), 0, INT32_BYTE_COUNT);
-        }
-
-        public int ReadInt()
-        {
-            return BitConverter.ToInt32(ReadBytes(INT32_BYTE_COUNT), 0);
-        }
-
         public void WriteUInt16(ushort value)
         {
             WriteByte((byte)(value >> 8));
@@ -106,12 +110,12 @@ namespace MiFramework.Stream
             return result;
         }
 
-        public void WriteUInt32(uint value)
+        public void WriteUInt32(uint data)
         {
-            WriteByte((byte)(value >> 24));
-            WriteByte((byte)(value >> 16));
-            WriteByte((byte)(value >> 8));
-            WriteByte((byte)value);
+            WriteByte((byte)(data >> 24));
+            WriteByte((byte)(data >> 16));
+            WriteByte((byte)(data >> 8));
+            WriteByte((byte)data);
         }
 
         public uint ReadUInt32()
@@ -124,21 +128,31 @@ namespace MiFramework.Stream
             return result;
         }
 
-        public void WriteFloat(float value)
+        public void WriteInt32(int value)
         {
-            WriteInt(BitConverter.SingleToInt32Bits(value));
+            WriteUInt32((uint)value);
+        }
+
+        public int ReadInt32()
+        {
+            return (int)ReadUInt32();
+        }
+
+        public void WriteFloat(float data)
+        {
+            WriteBytes(BitConverter.GetBytes(data), 0, 4);
         }
 
         public float ReadFloat()
         {
-            return BitConverter.Int32BitsToSingle(ReadInt());
+            return BitConverter.ToSingle(ReadBytes(4));
         }
 
         public void WriteString(string data)
         {
             char[] charArray = data.ToCharArray();
-            
-            WriteInt(charArray.Length);
+
+            WriteIntAdaptive(charArray.Length);
 
             for (int i = 0; i < charArray.Length; i++)
             {
@@ -148,7 +162,7 @@ namespace MiFramework.Stream
 
         public string ReadString()
         {
-            int length = ReadInt();
+            int length = ReadIntAdaptive();
             
             StringBuilder stringBuilder = new StringBuilder(length);
 
@@ -161,54 +175,43 @@ namespace MiFramework.Stream
             return stringBuilder.ToString();
         }
 
-        const uint NEG_FLAG = 0x80;
-        const ushort INT16_FLAG = 0x2000;
-        const uint INT32_FLAG = 0x40000000;
-
         public void WriteIntAdaptive(int data)
         {
-            bool isPositive = data >= 0;
-            int absData = isPositive ? data : -data;
-
-            if (isPositive)
+            bool isNegative = data < 0;
+            
+            if (isNegative)
             {
-                if (data < 32)
-                {
-                    byte temp = (byte)data;
-                    WriteByte(temp);
-                }
-                else if (data < 8192)
-                {
-                    ushort temp = (ushort)data;
-                    temp |= INT16_FLAG;
-                    WriteUInt16(temp);
-                }
-                else if (data < 536870912)
-                {
-                    uint temp = (uint)data;
-                    temp |= INT32_FLAG;
-                    WriteUInt32(temp);
-                }
+                data = -data;
             }
-            else
+
+            if (data < ADAPT_INT8_MAXVALUE)
             {
-                if (absData < 32)
-                {
-                    byte temp = (byte)(absData | NEG_FLAG);
-                    WriteByte(temp);
-                }
-                else if (absData < 8192)
-                {
-                    ushort temp = (ushort)(absData | (NEG_FLAG << 8));
-                    temp |= INT16_FLAG;
-                    WriteUInt16(temp);
-                }
-                else if (absData < 536870912)
-                {
-                    uint temp = (uint)(absData | (NEG_FLAG << 24));
-                    temp |= INT32_FLAG;
-                    WriteUInt32(temp);
-                }
+                byte temp = (byte)data;
+
+                if (isNegative)
+                    temp |= (byte)NEG_FLAG;
+                
+                WriteByte(temp);
+            }
+            else if (data < ADAPT_INT16_MAXVALUE)
+            {
+                ushort temp = (ushort)data;
+
+                if (isNegative)
+                    temp |= (ushort)(NEG_FLAG << 8);
+                
+                temp |= INT16_FLAG;
+                WriteUInt16(temp);
+            }
+            else if (data < ADAPT_INT32_MAXVALUE)
+            {
+                uint temp = (uint)data;
+                
+                if (isNegative)
+                    temp |= (uint)(NEG_FLAG << 24);
+                
+                temp |= INT32_FLAG;
+                WriteUInt32(temp);
             }
         }
 
