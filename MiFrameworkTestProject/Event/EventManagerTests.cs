@@ -41,6 +41,12 @@ namespace MiFramework.Event.Tests
             CallBackCount++;
         }
 
+        // 抛出异常的回调
+        public void TestEvent1CallBack3(object sender, TestEvent1 testEvent)
+        {
+            throw new Exception("一个故意的异常");
+        }
+
         public void TestEvent2CallBack(object sender, TestEvent2 testEvent)
         {
             Assert.AreEqual(sender, this);
@@ -71,6 +77,7 @@ namespace MiFramework.Event.Tests
         public void RepeatRegisterTest()
         {
             // 重复注册测试 当Invoke时应该只执行一次CallBack
+            CallBackCount = 0;
             EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack2);
             EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack2);
             EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack2);
@@ -87,6 +94,17 @@ namespace MiFramework.Event.Tests
             EventManager.Instance.UnRegister<TestEvent1>(TestEvent1CallBack1);
             // 反注册后若进入CallBack则测试失败
             EventManager.Instance.Invoke(this, new TestEvent1() { id = 1, message = "你好1" });
+        }
+
+        [TestMethod()]
+        public void InvokeTest()
+        {
+            // Invoke时的异常测试 当发生异常时应当继续输出日志并继续执行代码
+            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack1);
+            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack3);
+            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack2);
+
+            EventManager.Instance.Invoke(this, new TestEvent1() { id = 0, message = "你好" });
         }
     }
 }

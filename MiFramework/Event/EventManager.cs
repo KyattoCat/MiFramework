@@ -41,10 +41,24 @@
         public void Invoke<T>(object sender, T e) where T : EventArguments
         {
             Type eventType = typeof(T);
-            if (eventDict.TryGetValue(eventType, out var handler))
+
+            if (!eventDict.TryGetValue(eventType, out var handler) || handler == null)
+                return;
+
+            var invocationList = handler.GetInvocationList();
+
+            for (int i = 0; i < invocationList.Length; i++)
             {
-                var eventHandler = handler as EventHandler<T>;
-                eventHandler?.Invoke(sender, e);
+                var eventHandler = invocationList[i] as EventHandler<T>;
+                // 捕获异常
+                try
+                {
+                    eventHandler?.Invoke(sender, e);
+                }
+                catch (Exception ex)
+                {
+                    // TODO: 输出日志
+                }
             }
         }
     }
