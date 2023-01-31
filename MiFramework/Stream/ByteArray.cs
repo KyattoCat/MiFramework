@@ -213,6 +213,10 @@ namespace MiFramework.Stream
                 temp |= INT32_FLAG;
                 WriteUInt32(temp);
             }
+            else
+            {
+                throw new OverflowException();
+            }
         }
 
         public int ReadIntAdaptive()
