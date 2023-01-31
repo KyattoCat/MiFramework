@@ -5,10 +5,10 @@ namespace MiFramework.Stream
     public class ByteArray
     {
         private const UInt32 NEG_FLAG = 0x80;
-        private const UInt16 INT16_FLAG = 0x2000;
-        private const UInt32 INT32_FLAG = 0x40000000;
+        private const UInt16 INT16_FLAG = 0x4000;
+        private const UInt32 INT32_FLAG = 0x60000000;
 
-        private const int ADAPT_INT8_MAXVALUE = 32;
+        private const int ADAPT_INT8_MAXVALUE = 64;
         private const int ADAPT_INT16_MAXVALUE = 8192;
         private const int ADAPT_INT32_MAXVALUE = 536870912;
 
@@ -219,21 +219,22 @@ namespace MiFramework.Stream
         {
             byte temp1 = ReadByte();
             bool isPositive = (temp1 & NEG_FLAG) == 0;
+            bool byteFlag = ((temp1 >> 6) & 1) == 0;
             int flag = (temp1 >> 5) & 0b11;
-
+            
             int result = 0;
-            if (flag == 0)
+            if (byteFlag)
             {
-                result = temp1 & 0x1F;
+                result = temp1 & 0x3F;
             }
-            else if (flag == 1)
+            else if (flag == 0b10)
             {
                 byte temp2 = ReadByte();
 
                 result |= (temp1 & 0x1F) << 8;
                 result |= temp2;
             }
-            else if (flag == 2)
+            else if (flag == 0b11)
             {
                 byte temp2 = ReadByte();
                 byte temp3 = ReadByte();
