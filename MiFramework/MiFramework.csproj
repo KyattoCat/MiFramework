@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Debug\" />
-    <Folder Include="Event\" />
     <Folder Include="Math\" />
   </ItemGroup>
 
