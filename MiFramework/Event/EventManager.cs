@@ -57,7 +57,7 @@
                 }
                 catch (Exception ex)
                 {
-                    // TODO: 输出日志
+                    Debug.LogException(ex.Message);
                 }
             }
         }
