@@ -24,8 +24,16 @@ namespace MiFramework.Event.Tests
         }
 
         private static int CallBackCount = 0;
-        
-        public void TestEvent1CallBack(object sender, TestEvent1 testEvent)
+
+        public void TestEvent1CallBack1(object sender, TestEvent1 testEvent)
+        {
+            Assert.AreEqual(sender, this);
+            Assert.AreEqual(0, testEvent.id);
+            Assert.AreEqual("你好", testEvent.message);
+        }
+
+        // 测试重复注册的回调
+        public void TestEvent1CallBack2(object sender, TestEvent1 testEvent)
         {
             Assert.AreEqual(sender, this);
             Assert.AreEqual(0, testEvent.id);
@@ -43,19 +51,19 @@ namespace MiFramework.Event.Tests
         [TestMethod()]
         public void RegisterTest()
         {
-            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack);
+            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack1);
             EventManager.Instance.Invoke(this, new TestEvent1() { id = 0, message = "你好" });
-            EventManager.Instance.UnRegister<TestEvent1>(TestEvent1CallBack);
+            EventManager.Instance.UnRegister<TestEvent1>(TestEvent1CallBack1);
         }
 
         [TestMethod()]
         public void DifferentTypeRegisterTest()
         {
-            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack);
+            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack1);
             EventManager.Instance.Register<TestEvent2>(TestEvent2CallBack);
             EventManager.Instance.Invoke(this, new TestEvent2() { id = 1, price = 9.15f });
             EventManager.Instance.Invoke(this, new TestEvent1() { id = 0, message = "你好" });
-            EventManager.Instance.UnRegister<TestEvent1>(TestEvent1CallBack);
+            EventManager.Instance.UnRegister<TestEvent1>(TestEvent1CallBack1);
             EventManager.Instance.UnRegister<TestEvent2>(TestEvent2CallBack);
         }
 
@@ -63,20 +71,20 @@ namespace MiFramework.Event.Tests
         public void RepeatRegisterTest()
         {
             // 重复注册测试 当Invoke时应该只执行一次CallBack
-            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack);
-            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack);
-            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack);
+            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack2);
+            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack2);
+            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack2);
             EventManager.Instance.Invoke(this, new TestEvent1() { id = 0, message = "你好" });
-            EventManager.Instance.UnRegister<TestEvent1>(TestEvent1CallBack);
+            EventManager.Instance.UnRegister<TestEvent1>(TestEvent1CallBack2);
             Assert.AreEqual(1, CallBackCount);
         }
 
         [TestMethod()]
         public void UnRegisterTest()
         {
-            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack);
+            EventManager.Instance.Register<TestEvent1>(TestEvent1CallBack1);
             EventManager.Instance.Invoke(this, new TestEvent1() { id = 0, message = "你好" });
-            EventManager.Instance.UnRegister<TestEvent1>(TestEvent1CallBack);
+            EventManager.Instance.UnRegister<TestEvent1>(TestEvent1CallBack1);
             // 反注册后若进入CallBack则测试失败
             EventManager.Instance.Invoke(this, new TestEvent1() { id = 1, message = "你好1" });
         }
