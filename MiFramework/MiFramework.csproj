@@ -10,7 +10,6 @@
     <Folder Include="Debug\" />
     <Folder Include="Event\" />
     <Folder Include="Math\" />
-    <Folder Include="Pool\" />
   </ItemGroup>
 
 </Project>
