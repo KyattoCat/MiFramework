@@ -215,7 +215,7 @@ namespace MiFramework.Stream
             }
             else
             {
-                throw new OverflowException();
+                throw new ArgumentOutOfRangeException(nameof(data), $"data >= {ADAPT_INT32_MAXVALUE}(ADAPT_INT32_MAXVALUE)");
             }
         }
 
