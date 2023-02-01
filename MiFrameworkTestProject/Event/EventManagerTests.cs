@@ -106,5 +106,12 @@ namespace MiFramework.Event.Tests
 
             EventManager.Instance.Invoke(this, new TestEvent1() { id = 0, message = "你好" });
         }
+
+        [TestMethod()]
+        public void InvokeTest1()
+        {
+            // 发起未注册事件
+            EventManager.Instance.Invoke(this, new TestEvent1() { id = 1 });
+        }
     }
 }

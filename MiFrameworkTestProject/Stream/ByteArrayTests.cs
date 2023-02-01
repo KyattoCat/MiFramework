@@ -53,6 +53,8 @@ namespace MiFramework.Stream.Tests
             Assert.AreEqual(88888, byteArray2.ReadIntAdaptive());
             Assert.AreEqual(32, byteArray2.ReadIntAdaptive());
             Assert.AreEqual(64, byteArray2.ReadIntAdaptive());
+
+            Assert.ThrowsException<ArgumentOutOfRangeException>(() => byteArray1.WriteIntAdaptive(536870912));
         }
 
         [TestMethod()]
