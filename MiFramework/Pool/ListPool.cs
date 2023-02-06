@@ -11,7 +11,7 @@
 
         private static void Clear(List<T> list)
         {
-            list.Clear(); 
+            list.Clear();
         }
 
         public static List<T> Get()
@@ -21,7 +21,7 @@
 
         public static void Release(List<T>? list)
         {
-            listPool.Release(ref list);
+            listPool.Release(list);
         }
     }
 }
