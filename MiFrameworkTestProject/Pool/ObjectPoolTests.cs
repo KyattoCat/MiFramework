@@ -38,7 +38,7 @@ namespace MiFramework.Pool.Tests
             list.Add(1);
             list.Add(1);
             list.Add(1);
-            pool.Release(ref list);
+            pool.Release(list);
             Assert.IsNull(list);
 
             list = pool.Get();
@@ -50,9 +50,9 @@ namespace MiFramework.Pool.Tests
         {
             var list = pool.Get();
             Assert.IsNotNull(list);
-            pool.Release(ref list);
-            pool.Release(ref list);
-            pool.Release(ref list);
+            pool.Release(list);
+            pool.Release(list);
+            pool.Release(list);
             Assert.IsNull(list);
         }
     }
