@@ -5,7 +5,7 @@ VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiFramework", "MiFramework\MiFramework.csproj", "{2E5CBB72-5174-44BF-A28E-0D174F867EE4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiFrameworkTestProject", "MiFrameworkTestProject\MiFrameworkTestProject.csproj", "{D3FBF63F-2F1A-4061-A5EE-34FF1988C674}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiFrameworkConsole", "MiFrameworkConsole\MiFrameworkConsole.csproj", "{CC675725-B27A-4B62-85A6-B823E434455E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{2E5CBB72-5174-44BF-A28E-0D174F867EE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E5CBB72-5174-44BF-A28E-0D174F867EE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E5CBB72-5174-44BF-A28E-0D174F867EE4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D3FBF63F-2F1A-4061-A5EE-34FF1988C674}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D3FBF63F-2F1A-4061-A5EE-34FF1988C674}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D3FBF63F-2F1A-4061-A5EE-34FF1988C674}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D3FBF63F-2F1A-4061-A5EE-34FF1988C674}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC675725-B27A-4B62-85A6-B823E434455E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC675725-B27A-4B62-85A6-B823E434455E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC675725-B27A-4B62-85A6-B823E434455E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC675725-B27A-4B62-85A6-B823E434455E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
