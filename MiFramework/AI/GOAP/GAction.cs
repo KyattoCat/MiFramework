@@ -63,18 +63,29 @@ namespace MiFramework.AI.GOAP
         public Op op;
         public int value;
     }
+    
+    public enum GActionState
+    {
+        None,
+        Running,
+        Success,
+        Failed,
+    }
 
     public class GAction
     {
         public Dictionary<string, ConditionItem> conditions;
         public Dictionary<string, EffectItem> effects;
         public int cost;
+        public int duration;
+        public GActionState actionState;
 
-        public GAction(Dictionary<string, ConditionItem> conditions,  Dictionary<string, EffectItem> effects, int cost)
+        public GAction(Dictionary<string, ConditionItem> conditions,  Dictionary<string, EffectItem> effects, int cost, int duration)
         {
             this.conditions = conditions;
             this.effects = effects;
             this.cost = cost;
+            this.duration = duration;
         }
 
         public bool IsMatch(Dictionary<string, StateItem> states)
@@ -101,6 +112,21 @@ namespace MiFramework.AI.GOAP
 
                 state.Affected(effect.Value);
             }
+        }
+
+        public virtual void PreProcess()
+        {
+            actionState = GActionState.Running;
+        }
+
+        public virtual void PostProcess()
+        {
+
+        }
+
+        public virtual void Update()
+        {
+
         }
     }
 }
