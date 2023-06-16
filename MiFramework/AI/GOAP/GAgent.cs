@@ -50,7 +50,7 @@ namespace MiFramework.AI.GOAP
             
             if (currentAction == null)
             {
-                currentActionQueue = planner.Plan(actions, goal, agentState);
+                currentActionQueue = planner.Plan(actions, goal, MergeState(agentState, GWorld.WorldState));
 
                 if (currentActionQueue == null)
                     return;
