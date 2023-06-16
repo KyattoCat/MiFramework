@@ -14,7 +14,10 @@ namespace MiFramework.AI.GOAP
         {
             worldState[name] = item;
         }
-
+        public static void Set(string name, int value)
+        {
+            worldState[name] = new StateItem { value = value};
+        }
         public static bool TryGet(string name, out StateItem state)
         {
             return worldState.TryGetValue(name, out state);

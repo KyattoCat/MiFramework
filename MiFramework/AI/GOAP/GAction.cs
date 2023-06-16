@@ -25,6 +25,11 @@ namespace MiFramework.AI.GOAP
     {
         public int value;
 
+        public StateItem(int value)
+        {
+            this.value = value;
+        }
+
         public bool IsMatch(ConditionItem condition)
         {
             return condition.comparisonOp switch
@@ -56,12 +61,24 @@ namespace MiFramework.AI.GOAP
     {
         public ComparisonOp comparisonOp;
         public int value;
+
+        public ConditionItem(ComparisonOp comparisonOp, int value)
+        {
+            this.comparisonOp = comparisonOp;
+            this.value = value;
+        }
     }
 
     public struct EffectItem
     {
         public Op op;
         public int value;
+
+        public EffectItem(Op op, int value)
+        {
+            this.op = op;
+            this.value = value;
+        }
     }
     
     public enum GActionState
@@ -77,8 +94,14 @@ namespace MiFramework.AI.GOAP
         public Dictionary<string, ConditionItem> conditions;
         public Dictionary<string, EffectItem> effects;
         public int cost;
-        public int duration;
-        public GActionState actionState;
+
+        public virtual bool SupportLoop => false;
+
+        public GAction()
+        {
+            conditions = new Dictionary<string, ConditionItem>();
+            effects = new Dictionary<string, EffectItem>();
+        }
 
         /// <summary>
         /// 
@@ -87,12 +110,11 @@ namespace MiFramework.AI.GOAP
         /// <param name="effects"></param>
         /// <param name="cost"></param>
         /// <param name="duration">this is in millisecond</param>
-        public GAction(Dictionary<string, ConditionItem> conditions,  Dictionary<string, EffectItem> effects, int cost, int duration)
+        public GAction(Dictionary<string, ConditionItem> conditions,  Dictionary<string, EffectItem> effects, int cost)
         {
             this.conditions = conditions;
             this.effects = effects;
             this.cost = cost;
-            this.duration = duration;
         }
 
         public bool IsMatch(Dictionary<string, StateItem> states)
@@ -114,26 +136,25 @@ namespace MiFramework.AI.GOAP
                 if (!states.TryGetValue(effect.Key, out var state))
                 {
                     state = new StateItem();
-                    states.Add(effect.Key, state);
                 }
-
                 state.Affected(effect.Value);
+                states[effect.Key] = state;
             }
         }
 
-        public virtual void PreProcess()
-        {
-            actionState = GActionState.Running;
-        }
-
-        public virtual void PostProcess()
+        public virtual void PreProcess(GAgent agent)
         {
 
         }
 
-        public virtual void Process()
+        public virtual void PostProcess(GAgent agent)
         {
 
+        }
+
+        public virtual GActionState Process(GAgent agent)
+        {
+            return GActionState.Success;
         }
     }
 }

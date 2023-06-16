@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MiFramework.AI.GOAP
+﻿namespace MiFramework.AI.GOAP
 {
     public class GAgent
     {
@@ -13,11 +7,10 @@ namespace MiFramework.AI.GOAP
 
         private Queue<GAction>? currentActionQueue;
         private GAction? currentAction;
+        private GActionState currentActionState;
 
         private readonly Dictionary<string, StateItem> agentState;
         private Dictionary<string, ConditionItem>? goal;
-
-        private int currentActionTime;
 
         public GAgent()
         {
@@ -40,12 +33,23 @@ namespace MiFramework.AI.GOAP
             }
         }
 
+        public void SetGoal(string name, ConditionItem condition)
+        {
+            goal ??= new Dictionary<string, ConditionItem>();
+            goal.Add(name, condition);
+        }
+
         public void SetGoal(Dictionary<string, ConditionItem> goal)
         {
             this.goal = goal;
         }
 
-        public void Update(int deltaTime)
+        public void SetState(string name, StateItem state)
+        {
+            agentState[name] = state;
+        }
+
+        public void Update()
         {
             if (goal == null)
                 return;
@@ -55,35 +59,53 @@ namespace MiFramework.AI.GOAP
                 currentActionQueue = planner.Plan(actions, goal, MergeState(agentState, GWorld.WorldState));
 
                 if (currentActionQueue == null)
+                {
+#if DEBUG
+                    Console.WriteLine("Plan Failed");
+                    goal = null;
+#endif
                     return;
+                }
 
                 if (currentActionQueue.Count == 0)
                     return;
 
+#if DEBUG
+                Console.WriteLine("Plan Success");
+                foreach (GAction action in currentActionQueue)
+                {
+                    Console.Write(action.GetType().ToString() + "->");
+                }
+                Console.Write("[EOQ]\n");
+#endif
                 currentAction = currentActionQueue.Dequeue();
             }
 
             if (currentAction == null)
                 return;
 
-            if (currentAction.actionState == GActionState.None)
+            if (currentActionState == GActionState.None)
             {
-                currentAction.PreProcess();
-                currentActionTime = 0;
+                currentAction.PreProcess(this);
+                currentActionState = GActionState.Running;
             }
-            else if (currentAction.actionState == GActionState.Running && currentActionTime > currentAction.duration)
+            
+            if (currentActionState == GActionState.Running)
             {
-                currentAction.Process();
-                currentActionTime += deltaTime;
+                currentActionState = currentAction.Process(this);
             }
-            else if (currentAction.actionState == GActionState.Success || currentAction.actionState == GActionState.Failed)
+            
+            if (currentActionState == GActionState.Success)
             {
-                currentAction.PostProcess();
-                currentActionTime = 0;
+                currentAction.Effect(agentState);
             }
 
-            if (currentAction.actionState == GActionState.Success || currentAction.actionState == GActionState.Failed)
+            if (currentActionState == GActionState.Success || currentActionState == GActionState.Failed)
             {
+                currentAction.PostProcess(this);
+
+                currentActionState = GActionState.None;
+
                 if (currentActionQueue != null && currentActionQueue.Count > 0)
                 {
                     currentAction = currentActionQueue.Dequeue();
@@ -93,6 +115,9 @@ namespace MiFramework.AI.GOAP
                     goal = null;
                     currentAction = null;
                     currentActionQueue = null;
+#if DEBUG
+                    Console.WriteLine("ReachGoal");
+#endif
                 }
             }
         }
