@@ -80,6 +80,13 @@ namespace MiFramework.AI.GOAP
         public int duration;
         public GActionState actionState;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="conditions"></param>
+        /// <param name="effects"></param>
+        /// <param name="cost"></param>
+        /// <param name="duration">this is in millisecond</param>
         public GAction(Dictionary<string, ConditionItem> conditions,  Dictionary<string, EffectItem> effects, int cost, int duration)
         {
             this.conditions = conditions;
@@ -124,7 +131,7 @@ namespace MiFramework.AI.GOAP
 
         }
 
-        public virtual void Update()
+        public virtual void Process()
         {
 
         }

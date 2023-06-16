@@ -17,6 +17,8 @@ namespace MiFramework.AI.GOAP
         private readonly Dictionary<string, StateItem> agentState;
         private Dictionary<string, ConditionItem>? goal;
 
+        private int currentActionTime;
+
         public GAgent()
         {
             planner = new GPlanner();
@@ -43,7 +45,7 @@ namespace MiFramework.AI.GOAP
             this.goal = goal;
         }
 
-        public void Update()
+        public void Update(int deltaTime)
         {
             if (goal == null)
                 return;
@@ -67,14 +69,17 @@ namespace MiFramework.AI.GOAP
             if (currentAction.actionState == GActionState.None)
             {
                 currentAction.PreProcess();
+                currentActionTime = 0;
             }
-            else if (currentAction.actionState == GActionState.Running)
+            else if (currentAction.actionState == GActionState.Running && currentActionTime > currentAction.duration)
             {
-                currentAction.Update();
+                currentAction.Process();
+                currentActionTime += deltaTime;
             }
             else if (currentAction.actionState == GActionState.Success || currentAction.actionState == GActionState.Failed)
             {
                 currentAction.PostProcess();
+                currentActionTime = 0;
             }
 
             if (currentAction.actionState == GActionState.Success || currentAction.actionState == GActionState.Failed)
