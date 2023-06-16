@@ -76,6 +76,20 @@ namespace MiFramework.AI.GOAP
             {
                 currentAction.PostProcess();
             }
+
+            if (currentAction.actionState == GActionState.Success || currentAction.actionState == GActionState.Failed)
+            {
+                if (currentActionQueue != null && currentActionQueue.Count > 0)
+                {
+                    currentAction = currentActionQueue.Dequeue();
+                }
+                else // 队列执行完毕 待机
+                {
+                    goal = null;
+                    currentAction = null;
+                    currentActionQueue = null;
+                }
+            }
         }
 
         private Dictionary<string, StateItem> MergeState(Dictionary<string, StateItem> state1, Dictionary<string, StateItem> state2)
