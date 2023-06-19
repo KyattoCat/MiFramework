@@ -10,7 +10,7 @@
         private GActionState currentActionState;
 
         private readonly Dictionary<string, StateItem> agentState;
-        private Dictionary<string, ConditionItem>? goal;
+        private GGoal? goal;
 
         public GAgent()
         {
@@ -18,6 +18,11 @@
             actions = new List<GAction>();
             currentActionQueue = new Queue<GAction>();
             agentState = new Dictionary<string, StateItem>();
+        }
+
+        public void AddAction<T>() where T : GAction, new()
+        {
+            actions.Add(new T());
         }
 
         public void AddAction(GAction action)
@@ -33,15 +38,14 @@
             }
         }
 
-        public void SetGoal(string name, ConditionItem condition)
-        {
-            goal ??= new Dictionary<string, ConditionItem>();
-            goal.Add(name, condition);
-        }
-
-        public void SetGoal(Dictionary<string, ConditionItem> goal)
+        public void SetGoal(GGoal goal)
         {
             this.goal = goal;
+        }
+
+        public void SetState(string name, int state)
+        {
+            agentState[name] = new StateItem(state);
         }
 
         public void SetState(string name, StateItem state)
@@ -53,17 +57,21 @@
         {
             if (goal == null)
                 return;
-            
+
+            var goalDic = goal.GetGoal();
+            if (goalDic == null)
+                return;
+
             if (currentAction == null)
             {
-                currentActionQueue = planner.Plan(actions, goal, MergeState(agentState, GWorld.WorldState));
+                currentActionQueue = planner.Plan(actions, goalDic, MergeState(agentState, GWorld.WorldState));
 
                 if (currentActionQueue == null)
                 {
 #if DEBUG
                     Console.WriteLine("Plan Failed");
-                    goal = null;
 #endif
+                    goal = null;
                     return;
                 }
 
@@ -71,7 +79,7 @@
                     return;
 
 #if DEBUG
-                Console.WriteLine("Plan Success");
+                Console.Write("Plan Success: ");
                 foreach (GAction action in currentActionQueue)
                 {
                     Console.Write(action.GetType().ToString() + "->");
@@ -112,7 +120,8 @@
                 }
                 else // 队列执行完毕 待机
                 {
-                    goal = null;
+                    if (!goal.SupportLopp)
+                        goal = null;
                     currentAction = null;
                     currentActionQueue = null;
 #if DEBUG
@@ -122,7 +131,7 @@
             }
         }
 
-        private Dictionary<string, StateItem> MergeState(Dictionary<string, StateItem> state1, Dictionary<string, StateItem> state2)
+        private static Dictionary<string, StateItem> MergeState(Dictionary<string, StateItem> state1, Dictionary<string, StateItem> state2)
         {
             Dictionary<string, StateItem> merged = new Dictionary<string, StateItem>(state1.Count + state2.Count);
 
