@@ -7,9 +7,9 @@
     {
         public static EventManager Instance => Singleton<EventManager>.Instance;
 
-        public delegate void EventHandler<T>(object sender, T e) where T : EventArguments;
+        public delegate void EventHandler<T>(T e) where T : EventArguments;
 
-        private readonly Dictionary<Type, Delegate?> eventDict = new(32);
+        private readonly Dictionary<Type, Delegate> eventDict = new Dictionary<Type, Delegate>();
 
         public void Register<T>(EventHandler<T> handler) where T : EventArguments
         {
@@ -38,7 +38,7 @@
             }
         }
 
-        public void Invoke<T>(object sender, T e) where T : EventArguments
+        public void Invoke<T>(T e) where T : EventArguments
         {
             Type eventType = typeof(T);
 
@@ -53,11 +53,11 @@
                 // 捕获异常
                 try
                 {
-                    eventHandler?.Invoke(sender, e);
+                    eventHandler?.Invoke(e);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogException(ex.Message);
+                    Debug.LogException(ex.ToString());
                 }
             }
         }

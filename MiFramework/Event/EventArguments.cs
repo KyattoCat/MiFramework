@@ -2,6 +2,6 @@
 {
     public class EventArguments
     {
-
+        public object? sender;
     }
 }
