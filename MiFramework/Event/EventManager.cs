@@ -1,4 +1,8 @@
-﻿namespace MiFramework.Event
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace MiFramework.Event
 {
     /// <summary>
     /// 基础来自于: https://blog.csdn.net/abcdtty/article/details/13021237
@@ -65,7 +69,7 @@
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogException(ex.ToString());
+                    Debug.LogException(ex);
                 }
             }
         }
