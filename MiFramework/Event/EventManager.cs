@@ -38,6 +38,11 @@
             }
         }
 
+        public void Invoke<T>() where T : EventArguments, new()
+        {
+            Invoke(EventFactory.Spawn<T>());
+        }
+
         public void Invoke<T>(T e) where T : EventArguments
         {
             Type eventType = typeof(T);
@@ -53,7 +58,10 @@
                 // 捕获异常
                 try
                 {
-                    eventHandler?.Invoke(e);
+                    if (e.bSupportAsync)
+                        eventHandler?.BeginInvoke(e, null, null);
+                    else
+                        eventHandler?.Invoke(e);
                 }
                 catch (Exception ex)
                 {
