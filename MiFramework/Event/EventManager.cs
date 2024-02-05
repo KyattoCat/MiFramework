@@ -1,4 +1,8 @@
-﻿namespace MiFramework.Event
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace MiFramework.Event
 {
     /// <summary>
     /// 基础来自于: https://blog.csdn.net/abcdtty/article/details/13021237
@@ -38,6 +42,11 @@
             }
         }
 
+        public void Invoke<T>() where T : EventArguments, new()
+        {
+            Invoke(EventFactory.Spawn<T>());
+        }
+
         public void Invoke<T>(T e) where T : EventArguments
         {
             Type eventType = typeof(T);
@@ -53,11 +62,14 @@
                 // 捕获异常
                 try
                 {
-                    eventHandler?.Invoke(e);
+                    if (e.bSupportAsync)
+                        eventHandler?.BeginInvoke(e, null, null);
+                    else
+                        eventHandler?.Invoke(e);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogException(ex.ToString());
+                    Debug.LogException(ex);
                 }
             }
         }
