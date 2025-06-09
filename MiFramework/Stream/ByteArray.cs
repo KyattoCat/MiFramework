@@ -253,14 +253,13 @@ namespace MiFramework.Stream
         public void WriteBoolean(bool value)
         {
             EnsureCapacity(1);
-            WriteByte(value ? (byte)1 : (byte)0);
+            buffer[position++] = (byte)(value ? 1 : 0);
         }
 
         public void WriteByte(byte value)
         {
             EnsureCapacity(1);
-            buffer[position] = value;
-            position++;
+            buffer[position++] = value;
         }
 
         public void WriteDouble(double value)
@@ -288,24 +287,30 @@ namespace MiFramework.Stream
         public void WriteInt(int value)
         {
             EnsureCapacity(4);
-            WriteByte((byte)(value >> 24));
-            WriteByte((byte)(value >> 16));
-            WriteByte((byte)(value >> 8));
-            WriteByte((byte)value);
+            buffer[position++] = (byte)(value >> 24);
+            buffer[position++] = (byte)(value >> 16);
+            buffer[position++] = (byte)(value >> 8);
+            buffer[position++] = (byte)value;
         }
 
         public void WriteLong(long value)
         {
             EnsureCapacity(8);
-            WriteInt((int)(value >> 32));
-            WriteInt((int)value);
+            buffer[position++] = (byte)(value >> 56);
+            buffer[position++] = (byte)(value >> 48);
+            buffer[position++] = (byte)(value >> 40);
+            buffer[position++] = (byte)(value >> 32);
+            buffer[position++] = (byte)(value >> 24);
+            buffer[position++] = (byte)(value >> 16);
+            buffer[position++] = (byte)(value >> 8);
+            buffer[position++] = (byte)value;
         }
 
         public void WriteShort(short value)
         {
             EnsureCapacity(2);
-            WriteByte((byte)(value >> 8));
-            WriteByte((byte)value);
+            buffer[position++] = (byte)(value >> 8);
+            buffer[position++] = (byte)value;
         }
 
         public void WriteString(string value)
@@ -318,24 +323,30 @@ namespace MiFramework.Stream
         public void WriteUInt(uint value)
         {
             EnsureCapacity(4);
-            WriteByte((byte)(value >> 24));
-            WriteByte((byte)(value >> 16));
-            WriteByte((byte)(value >> 8));
-            WriteByte((byte)value);
+            buffer[position++] = (byte)(value >> 24);
+            buffer[position++] = (byte)(value >> 16);
+            buffer[position++] = (byte)(value >> 8);
+            buffer[position++] = (byte)value;
         }
 
         public void WriteULong(ulong value)
         {
             EnsureCapacity(8);
-            WriteUInt((uint)(value >> 32));
-            WriteUInt((uint)value);
+            buffer[position++] = (byte)(value >> 56);
+            buffer[position++] = (byte)(value >> 48);
+            buffer[position++] = (byte)(value >> 40);
+            buffer[position++] = (byte)(value >> 32);
+            buffer[position++] = (byte)(value >> 24);
+            buffer[position++] = (byte)(value >> 16);
+            buffer[position++] = (byte)(value >> 8);
+            buffer[position++] = (byte)value;
         }
 
         public void WriteUShort(ushort value)
         {
             EnsureCapacity(2);
-            WriteByte((byte)(value >> 8));
-            WriteByte((byte)value);
+            buffer[position++] = (byte)(value >> 8);
+            buffer[position++] = (byte)value;
         }
 
         public unsafe void WriteVarInt(int value)
