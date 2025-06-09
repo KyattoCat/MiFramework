@@ -4,253 +4,390 @@ namespace MiFramework.Stream
 {
     public class ByteArray
     {
-        private const UInt32 NEG_FLAG = 0x80;
-        private const UInt16 INT16_FLAG = 0x4000;
-        private const UInt32 INT32_FLAG = 0x60000000;
+        private byte[] buffer;
+        private int position;
 
-        private const int ADAPT_INT8_MAXVALUE = 64;
-        private const int ADAPT_INT16_MAXVALUE = 8192;
-        private const int ADAPT_INT32_MAXVALUE = 536870912;
-
-        private byte[] data;            // 
-        private uint offset;            // 
-        private uint maxCapacity = 16;  // data数组的大小
-        private uint count;             // 当前ByteArray中有效位数
-
-        public ByteArray()
+        public byte[] Buffer
         {
-            data = new byte[maxCapacity];
+            get { return buffer; }
         }
 
-        public byte[] GetData()
+        public int Length
         {
-            byte[] result = new byte[count];
-            Array.Copy(data, result, count);
-            return result;
+            get { return buffer.Length; }
         }
-#if DEBUG
-        public void WriteTo(ByteArray destination)
+
+        public int Position
         {
-            destination.maxCapacity = maxCapacity;
-            destination.count = count;
-            destination.offset = 0;
-            destination.data = new byte[data.Length];
-            for (int i = 0; i < data.Length; i++)
+            get { return position; }
+            set { position = value; }
+        }
+
+        public ByteArray(int size)
+        {
+            buffer = new byte[size];
+        }
+
+        public void Clear()
+        {
+            Array.Clear(buffer, 0, buffer.Length);
+            position = 0;
+        }
+
+        public unsafe void Read(byte[] data, int offset, int count)
+        {
+            if (position + count > buffer.Length)
+                throw new InvalidOperationException("Read beyond the buffer length.");
+
+            fixed (byte* pSrc = &buffer[position], pDst = &data[offset])
             {
-                destination.data[i] = data[i];
+                byte* src = pSrc;
+                byte* dst = pDst;
+                for (int i = 0; i < count; i++)
+                {
+                    *dst++ = *src++;
+                }
             }
-        }
-#endif
-        private void ExpandCapacity()
-        {
-            ulong newCapacity = maxCapacity * 2;
-            
-            if (newCapacity > uint.MaxValue)
-            {
-                throw new OverflowException();
-            }
-
-            byte[] bytes = new byte[newCapacity];
-            
-            Array.Copy(data, bytes, maxCapacity);
-            
-            maxCapacity = (uint)newCapacity;
-
-            data = bytes;
+            position += count;
         }
 
-        public void WriteByte(byte value)
+        public bool ReadBoolean()
         {
-            if (offset + 1 > maxCapacity)
-            {
-                ExpandCapacity();
-            }
-            data[offset++] = value;
-            count++;
+            return ReadByte() == 1;
         }
 
         public byte ReadByte()
         {
-            if (offset + 1 > count)
+            if (position >= buffer.Length)
+                throw new InvalidOperationException("Read beyond the buffer length.");
+
+            byte value = buffer[position];
+            position++;
+            return value;
+        }
+
+        public double ReadDouble()
+        {
+            unsafe
             {
-                throw new IndexOutOfRangeException();
+                long longValue = ReadLong();
+                double* pDoubleValue = (double*)&longValue;
+                return *pDoubleValue;
             }
-            return data[offset++];
-        }
-
-        private void WriteBytes(byte[] bytes, int index, int length)
-        {
-            for (int i = index; i < index + length; i++)
-            {
-                WriteByte(bytes[i]);
-            }
-        }
-
-        private byte[] ReadBytes(int length)
-        {
-            byte[] bytes = new byte[length];
-            for (int i = 0; i < length; i++)
-            {
-                bytes[i] = ReadByte();
-            }
-            return bytes;
-        }
-
-        public void WriteUInt16(ushort value)
-        {
-            WriteByte((byte)(value >> 8));
-            WriteByte((byte)value);
-        }
-
-        public ushort ReadUInt16()
-        {
-            ushort result = 0;
-            result |= (ushort)(ReadByte() << 8);
-            result |= (ushort)(ReadByte() << 0);
-            return result;
-        }
-
-        public void WriteUInt32(uint data)
-        {
-            WriteByte((byte)(data >> 24));
-            WriteByte((byte)(data >> 16));
-            WriteByte((byte)(data >> 8));
-            WriteByte((byte)data);
-        }
-
-        public uint ReadUInt32()
-        {
-            uint result = 0;
-            result |= (uint)(ReadByte() << 24);
-            result |= (uint)(ReadByte() << 16);
-            result |= (uint)(ReadByte() << 8);
-            result |= (uint)(ReadByte() << 0);
-            return result;
-        }
-
-        public void WriteInt32(int value)
-        {
-            WriteUInt32((uint)value);
-        }
-
-        public int ReadInt32()
-        {
-            return (int)ReadUInt32();
-        }
-
-        public void WriteFloat(float data)
-        {
-            WriteBytes(BitConverter.GetBytes(data), 0, 4);
         }
 
         public float ReadFloat()
         {
-            return BitConverter.ToSingle(ReadBytes(4));
-        }
-
-        public void WriteString(string data)
-        {
-            char[] charArray = data.ToCharArray();
-
-            WriteIntAdaptive(charArray.Length);
-
-            for (int i = 0; i < charArray.Length; i++)
+            unsafe
             {
-                WriteUInt16(charArray[i]);
+                int intValue = ReadInt();
+                float* pFloatValue = (float*)&intValue;
+                return *pFloatValue;
             }
         }
 
-        public string ReadString()
+        public int ReadInt()
         {
-            int length = ReadIntAdaptive();
-            
-            StringBuilder stringBuilder = new StringBuilder(length);
+            if (position + 4 > buffer.Length)
+                throw new InvalidOperationException("Read beyond the buffer length.");
 
-            for (int i = 0; i < length; i++)
-            {
-                char temp = (char)ReadUInt16();
-                stringBuilder.Append(temp);
-            }
-
-            return stringBuilder.ToString();
+            int value = (buffer[position] << 24) | (buffer[position + 1] << 16) | (buffer[position + 2] << 8) | buffer[position + 3];
+            position += 4;
+            return value;
         }
 
-        public void WriteIntAdaptive(int data)
+        public long ReadLong()
         {
-            bool isNegative = data < 0;
-            
-            if (isNegative)
-            {
-                data = -data;
-            }
+            if (position + 8 > buffer.Length)
+                throw new InvalidOperationException("Read beyond the buffer length.");
 
-            if (data < ADAPT_INT8_MAXVALUE)
-            {
-                byte temp = (byte)data;
-
-                if (isNegative)
-                    temp |= (byte)NEG_FLAG;
-                
-                WriteByte(temp);
-            }
-            else if (data < ADAPT_INT16_MAXVALUE)
-            {
-                ushort temp = (ushort)data;
-
-                if (isNegative)
-                    temp |= (ushort)(NEG_FLAG << 8);
-                
-                temp |= INT16_FLAG;
-                WriteUInt16(temp);
-            }
-            else if (data < ADAPT_INT32_MAXVALUE)
-            {
-                uint temp = (uint)data;
-                
-                if (isNegative)
-                    temp |= (uint)(NEG_FLAG << 24);
-                
-                temp |= INT32_FLAG;
-                WriteUInt32(temp);
-            }
-            else
-            {
-                throw new ArgumentOutOfRangeException(nameof(data), $"data >= {ADAPT_INT32_MAXVALUE}(ADAPT_INT32_MAXVALUE)");
-            }
+            long value = ((long)ReadInt() << 32) | (uint)ReadInt();
+            return value;
         }
 
-        public int ReadIntAdaptive()
+        public short ReadShort()
         {
-            byte temp1 = ReadByte();
-            bool isPositive = (temp1 & NEG_FLAG) == 0;
-            bool byteFlag = ((temp1 >> 6) & 1) == 0;
-            int flag = (temp1 >> 5) & 0b11;
-            
+            if (position + 2 > buffer.Length)
+                throw new InvalidOperationException("Read beyond the buffer length.");
+
+            short value = (short)((buffer[position] << 8) | buffer[position + 1]);
+            position += 2;
+            return value;
+        }
+
+        public unsafe string ReadString()
+        {
+            int length = ReadInt();
+            if (position + length > buffer.Length)
+                throw new InvalidOperationException("Read beyond the buffer length.");
+
+            char* charBuffer = stackalloc char[length];
+            byte* byteBuffer = stackalloc byte[length];
+
+            fixed (byte* pSrc = &buffer[position])
+            {
+                byte* src = pSrc;
+                for (int i = 0; i < length; i++)
+                {
+                    byteBuffer[i] = *src++;
+                }
+            }
+            position += length;
+
+            Encoding.UTF8.GetChars(byteBuffer, length, charBuffer, length);
+            return new string(charBuffer, 0, length);
+        }
+
+        public uint ReadUInt()
+        {
+            if (position + 4 > buffer.Length)
+                throw new InvalidOperationException("Read beyond the buffer length.");
+
+            uint value = (uint)((buffer[position] << 24) | (buffer[position + 1] << 16) | (buffer[position + 2] << 8) | buffer[position + 3]);
+            position += 4;
+            return value;
+        }
+
+        public ulong ReadULong()
+        {
+            if (position + 8 > buffer.Length)
+                throw new InvalidOperationException("Read beyond the buffer length.");
+
+            ulong value = ((ulong)ReadUInt() << 32) | ReadUInt();
+            return value;
+        }
+
+        public ushort ReadUShort()
+        {
+            if (position + 2 > buffer.Length)
+                throw new InvalidOperationException("Read beyond the buffer length.");
+
+            ushort value = (ushort)((buffer[position] << 8) | buffer[position + 1]);
+            position += 2;
+            return value;
+        }
+
+        public unsafe int ReadVarInt()
+        {
             int result = 0;
-            if (byteFlag)
+            int shift = 0;
+            byte b;
+            do
             {
-                result = temp1 & 0x3F;
-            }
-            else if (flag == 0b10)
+                if (position >= buffer.Length)
+                    throw new InvalidOperationException("Read beyond the buffer length.");
+
+                b = ReadByte();
+                result |= (b & 0x7F) << shift;
+                shift += 7;
+            } while ((b & 0x80) != 0);
+            return result;
+        }
+
+        public unsafe long ReadVarLong()
+        {
+            long result = 0;
+            int shift = 0;
+            byte b;
+            do
             {
-                byte temp2 = ReadByte();
+                if (position >= buffer.Length)
+                    throw new InvalidOperationException("Read beyond the buffer length.");
 
-                result |= (temp1 & 0x1F) << 8;
-                result |= temp2;
-            }
-            else if (flag == 0b11)
+                b = ReadByte();
+                result |= (long)(b & 0x7F) << shift;
+                shift += 7;
+            } while ((b & 0x80) != 0);
+            return result;
+        }
+
+        public unsafe uint ReadVarUInt()
+        {
+            uint result = 0;
+            int shift = 0;
+            byte b;
+            do
             {
-                byte temp2 = ReadByte();
-                byte temp3 = ReadByte();
-                byte temp4 = ReadByte();
+                if (position >= buffer.Length)
+                    throw new InvalidOperationException("Read beyond the buffer length.");
 
-                result |= (temp1 & 0x1F) << 24;
-                result |= temp2 << 16;
-                result |= temp3 << 8;
-                result |= temp4;
+                b = ReadByte();
+                result |= (uint)(b & 0x7F) << shift;
+                shift += 7;
+            } while ((b & 0x80) != 0);
+            return result;
+        }
+
+        public unsafe ulong ReadVarULong()
+        {
+            ulong result = 0;
+            int shift = 0;
+            byte b;
+            do
+            {
+                if (position >= buffer.Length)
+                    throw new InvalidOperationException("Read beyond the buffer length.");
+
+                b = ReadByte();
+                result |= (ulong)(b & 0x7F) << shift;
+                shift += 7;
+            } while ((b & 0x80) != 0);
+            return result;
+        }
+
+        public unsafe void Write(byte[] data, int offset, int count)
+        {
+            EnsureCapacity(count);
+            fixed (byte* pSrc = &data[offset], pDst = &buffer[position])
+            {
+                byte* src = pSrc;
+                byte* dst = pDst;
+                for (int i = 0; i < count; i++)
+                {
+                    *dst++ = *src++;
+                }
             }
+            position += count;
+        }
 
-            return isPositive ? result : -result;
+        public void WriteBoolean(bool value)
+        {
+            EnsureCapacity(1);
+            WriteByte(value ? (byte)1 : (byte)0);
+        }
+
+        public void WriteByte(byte value)
+        {
+            EnsureCapacity(1);
+            buffer[position] = value;
+            position++;
+        }
+
+        public void WriteDouble(double value)
+        {
+            EnsureCapacity(8);
+            unsafe
+            {
+                double* pValue = &value;
+                long* pLongValue = (long*)pValue;
+                WriteLong(*pLongValue);
+            }
+        }
+
+        public void WriteFloat(float value)
+        {
+            EnsureCapacity(4);
+            unsafe
+            {
+                float* pValue = &value;
+                int* pIntValue = (int*)pValue;
+                WriteInt(*pIntValue);
+            }
+        }
+
+        public void WriteInt(int value)
+        {
+            EnsureCapacity(4);
+            WriteByte((byte)(value >> 24));
+            WriteByte((byte)(value >> 16));
+            WriteByte((byte)(value >> 8));
+            WriteByte((byte)value);
+        }
+
+        public void WriteLong(long value)
+        {
+            EnsureCapacity(8);
+            WriteInt((int)(value >> 32));
+            WriteInt((int)value);
+        }
+
+        public void WriteShort(short value)
+        {
+            EnsureCapacity(2);
+            WriteByte((byte)(value >> 8));
+            WriteByte((byte)value);
+        }
+
+        public void WriteString(string value)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(value);
+            WriteInt(bytes.Length);
+            Write(bytes, 0, bytes.Length);
+        }
+
+        public void WriteUInt(uint value)
+        {
+            EnsureCapacity(4);
+            WriteByte((byte)(value >> 24));
+            WriteByte((byte)(value >> 16));
+            WriteByte((byte)(value >> 8));
+            WriteByte((byte)value);
+        }
+
+        public void WriteULong(ulong value)
+        {
+            EnsureCapacity(8);
+            WriteUInt((uint)(value >> 32));
+            WriteUInt((uint)value);
+        }
+
+        public void WriteUShort(ushort value)
+        {
+            EnsureCapacity(2);
+            WriteByte((byte)(value >> 8));
+            WriteByte((byte)value);
+        }
+
+        public unsafe void WriteVarInt(int value)
+        {
+            while ((value & ~0x7F) != 0)
+            {
+                WriteByte((byte)((value & 0x7F) | 0x80));
+                value >>= 7;
+            }
+            WriteByte((byte)value);
+        }
+
+        public unsafe void WriteVarLong(long value)
+        {
+            while ((value & ~0x7FL) != 0)
+            {
+                WriteByte((byte)((value & 0x7F) | 0x80));
+                value >>= 7;
+            }
+            WriteByte((byte)value);
+        }
+
+        public unsafe void WriteVarUInt(uint value)
+        {
+            while ((value & ~0x7F) != 0)
+            {
+                WriteByte((byte)((value & 0x7F) | 0x80));
+                value >>= 7;
+            }
+            WriteByte((byte)value);
+        }
+
+        public unsafe void WriteVarULong(ulong value)
+        {
+            while ((value & ~0x7FUL) != 0)
+            {
+                WriteByte((byte)((value & 0x7F) | 0x80));
+                value >>= 7;
+            }
+            WriteByte((byte)value);
+        }
+
+        private void EnsureCapacity(int additionalBytes)
+        {
+            int requiredCapacity = position + additionalBytes;
+            if (requiredCapacity > buffer.Length)
+            {
+                int newCapacity = Math.Max(buffer.Length * 2, requiredCapacity);
+                byte[] newBuffer = new byte[newCapacity];
+                Array.Copy(buffer, newBuffer, buffer.Length);
+                buffer = newBuffer;
+            }
         }
     }
 }
